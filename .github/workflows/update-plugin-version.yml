@@ -1,6 +1,6 @@
 # Update Plugin Version
 # Receives repository_dispatch from plugin repos when they release a new version.
-# Updates marketplace.json with the new version and commits.
+# Fetches plugin metadata from source repo, upserts marketplace.json, regenerates README.
 
 name: Update Plugin Version
 
@@ -20,35 +20,158 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Update marketplace.json
+      - name: Fetch plugin metadata
+        id: meta
+        env:
+          PLUGIN: ${{ github.event.client_payload.plugin }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fetch plugin.json from the source repo
+          gh api "repos/claylo/${PLUGIN}/contents/.claude-plugin/plugin.json" \
+            --jq '.content' | base64 -d > /tmp/plugin.json
+
+          # Extract fields
+          description=$(jq -r '.description' /tmp/plugin.json)
+          repository=$(jq -r '.repository' /tmp/plugin.json)
+
+          echo "description=${description}" >> "$GITHUB_OUTPUT"
+          echo "repository=${repository}" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert marketplace.json
         env:
           PLUGIN: ${{ github.event.client_payload.plugin }}
           VERSION: ${{ github.event.client_payload.version }}
+          DESCRIPTION: ${{ steps.meta.outputs.description }}
+          REPOSITORY: ${{ steps.meta.outputs.repository }}
         run: |
-          # Update plugin version
-          jq --arg name "$PLUGIN" --arg version "$VERSION" '
-            .plugins |= map(if .name == $name then .version = $version else . end)
-          ' .claude-plugin/marketplace.json > tmp.json
-          mv tmp.json .claude-plugin/marketplace.json
+          file=".claude-plugin/marketplace.json"
+
+          # Check if plugin already exists
+          exists=$(jq --arg name "$PLUGIN" '[.plugins[] | select(.name == $name)] | length' "$file")
+
+          if [ "$exists" -gt 0 ]; then
+            # Update existing plugin
+            jq --arg name "$PLUGIN" \
+               --arg version "$VERSION" \
+               --arg desc "$DESCRIPTION" \
+               --arg url "${REPOSITORY}.git" '
+              .plugins |= map(
+                if .name == $name then
+                  .version = $version |
+                  .description = $desc |
+                  .source.url = $url
+                else . end
+              )
+            ' "$file" > tmp.json
+          else
+            # Add new plugin
+            jq --arg name "$PLUGIN" \
+               --arg version "$VERSION" \
+               --arg desc "$DESCRIPTION" \
+               --arg url "${REPOSITORY}.git" '
+              .plugins += [{
+                name: $name,
+                source: { source: "url", url: $url },
+                description: $desc,
+                version: $version,
+                strict: true
+              }]
+            ' "$file" > tmp.json
+          fi
+          mv tmp.json "$file"
 
           # Bump marketplace metadata.version (patch)
-          current=$(jq -r '.metadata.version' .claude-plugin/marketplace.json)
+          current=$(jq -r '.metadata.version' "$file")
           IFS='.' read -r major minor patch <<< "$current"
           next="${major}.${minor}.$((patch + 1))"
-          jq --arg v "$next" '.metadata.version = $v' .claude-plugin/marketplace.json > tmp.json
-          mv tmp.json .claude-plugin/marketplace.json
+          jq --arg v "$next" '.metadata.version = $v' "$file" > tmp.json
+          mv tmp.json "$file"
 
-          echo "Updated ${PLUGIN} to ${VERSION}, marketplace ${current} → ${next}"
-          jq '{metadata_version: .metadata.version, plugin: (.plugins[] | select(.name == env.PLUGIN))}' .claude-plugin/marketplace.json
+          echo "Updated ${PLUGIN} to v${VERSION}, marketplace ${current} -> ${next}"
+          jq . "$file"
 
-      - name: Commit
+      - name: Regenerate README
+        run: |
+          file=".claude-plugin/marketplace.json"
+
+          # Write header
+          cat > README.md <<'EOF'
+          # claylo-marketplace
+
+          Claude Code plugins I build and maintain. If it's listed here, it works and I use it.
+
+          ## Install
+
+          ```
+          /plugin marketplace add claylo/claylo-marketplace
+          ```
+
+          Then install individual plugins:
+
+          ```
+          /plugin install <plugin-name>@claylo-marketplace
+          ```
+
+          ## Plugins
+          EOF
+
+          # Generate plugin entries sorted by name
+          jq -r '.plugins | sort_by(.name)[] | @json' "$file" | while read -r plugin_json; do
+            name=$(echo "$plugin_json" | jq -r '.name')
+            version=$(echo "$plugin_json" | jq -r '.version')
+            description=$(echo "$plugin_json" | jq -r '.description')
+            url=$(echo "$plugin_json" | jq -r '.source.url' | sed 's/\.git$//')
+
+            printf '\n### [%s](%s) `v%s`\n\n%s\n\n```\n/plugin install %s@claylo-marketplace\n```\n' \
+              "$name" "$url" "$version" "$description" "$name" >> README.md
+          done
+
+          # Write footer
+          cat >> README.md <<'EOF'
+
+          ## Adding plugins
+
+          Each plugin entry in `.claude-plugin/marketplace.json` points to a standalone git repo. Plugins are self-contained — install one or all, they don't depend on each other unless noted.
+
+          ```json
+          {
+            "name": "plugin-name",
+            "source": {
+              "source": "url",
+              "url": "https://github.com/claylo/plugin-name.git"
+            },
+            "description": "What it does",
+            "version": "1.0.0",
+            "strict": true
+          }
+          ```
+
+          ## License
+
+          MIT
+          EOF
+
+          echo "--- Generated README.md ---"
+          cat README.md
+
+      - name: Commit and release
+        env:
+          PLUGIN: ${{ github.event.client_payload.plugin }}
+          PLUGIN_VERSION: ${{ github.event.client_payload.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .claude-plugin/marketplace.json
+          git add .claude-plugin/marketplace.json README.md
           if git diff --cached --quiet; then
             echo "No changes to commit"
-          else
-            git commit -m "chore: update ${{ github.event.client_payload.plugin }} to v${{ github.event.client_payload.version }}"
-            git push
+            exit 0
           fi
+
+          marketplace_version=$(jq -r '.metadata.version' .claude-plugin/marketplace.json)
+          git commit -m "chore: update ${PLUGIN} to v${PLUGIN_VERSION}"
+          git push
+
+          gh release create "v${marketplace_version}" \
+            --title "v${marketplace_version}" \
+            --notes "Update ${PLUGIN} to v${PLUGIN_VERSION}"

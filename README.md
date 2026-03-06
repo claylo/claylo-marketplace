@@ -18,15 +18,18 @@ Then install individual plugins:
 
 ### [actionista](https://github.com/claylo/actionista) `v0.2.0`
 
-GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices.
-
-- Tracks 118 GitHub Actions with current versions and migration diffs
-- MCP server with `lookup_action`, `list_actions`, and `check_workflow` tools
-- Skill content covering patterns, security, and workflow syntax
-- Daily automated index updates via Claude Code Action
+GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices
 
 ```
 /plugin install actionista@claylo-marketplace
+```
+
+### [building-in-the-open](https://github.com/claylo/building-in-the-open) `v1.0.0`
+
+Personas, skills, and quality gates for producing professional, self-contained development artifacts — from internal handoffs to end-user documentation
+
+```
+/plugin install building-in-the-open@claylo-marketplace
 ```
 
 ## Adding plugins

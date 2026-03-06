@@ -18,6 +18,16 @@
       "description": "GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices",
       "version": "0.2.0",
       "strict": true
+    },
+    {
+      "name": "building-in-the-open",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/claylo/building-in-the-open.git"
+      },
+      "description": "Personas, skills, and quality gates for producing professional, self-contained development artifacts — from internal handoffs to end-user documentation",
+      "version": "1.0.0",
+      "strict": true
     }
   ]
 }
