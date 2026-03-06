@@ -1,0 +1,23 @@
+{
+  "name": "claylo-marketplace",
+  "owner": {
+    "name": "Clay Loveless",
+    "email": "clay@loveless.net"
+  },
+  "metadata": {
+    "description": "Claude Code plugins by Clay Loveless",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "actionista",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/claylo/actionista.git"
+      },
+      "description": "GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices",
+      "version": "0.2.0",
+      "strict": true
+    }
+  ]
+}
