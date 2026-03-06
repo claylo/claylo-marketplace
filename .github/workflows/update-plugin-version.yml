@@ -1,0 +1,54 @@
+# Update Plugin Version
+# Receives repository_dispatch from plugin repos when they release a new version.
+# Updates marketplace.json with the new version and commits.
+
+name: Update Plugin Version
+
+on:
+  repository_dispatch:
+    types: [plugin-update]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update ${{ github.event.client_payload.plugin }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Update marketplace.json
+        env:
+          PLUGIN: ${{ github.event.client_payload.plugin }}
+          VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          # Update plugin version
+          jq --arg name "$PLUGIN" --arg version "$VERSION" '
+            .plugins |= map(if .name == $name then .version = $version else . end)
+          ' .claude-plugin/marketplace.json > tmp.json
+          mv tmp.json .claude-plugin/marketplace.json
+
+          # Bump marketplace metadata.version (patch)
+          current=$(jq -r '.metadata.version' .claude-plugin/marketplace.json)
+          IFS='.' read -r major minor patch <<< "$current"
+          next="${major}.${minor}.$((patch + 1))"
+          jq --arg v "$next" '.metadata.version = $v' .claude-plugin/marketplace.json > tmp.json
+          mv tmp.json .claude-plugin/marketplace.json
+
+          echo "Updated ${PLUGIN} to ${VERSION}, marketplace ${current} → ${next}"
+          jq '{metadata_version: .metadata.version, plugin: (.plugins[] | select(.name == env.PLUGIN))}' .claude-plugin/marketplace.json
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/marketplace.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update ${{ github.event.client_payload.plugin }} to v${{ github.event.client_payload.version }}"
+            git push
+          fi
