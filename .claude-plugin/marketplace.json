@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins by Clay Loveless",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "plugins": [
     {
@@ -26,7 +26,7 @@
         "url": "https://github.com/claylo/building-in-the-open.git"
       },
       "description": "Personas, skills, and quality gates for producing professional, self-contained development artifacts — from internal handoffs to end-user documentation",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "strict": true
     }
   ]
