@@ -24,7 +24,7 @@ GitHub Actions assistant — helps create, review, and optimize workflows with u
 /plugin install actionista@claylo-marketplace
 ```
 
-### [building-in-the-open](https://github.com/claylo/building-in-the-open) `v1.2.0`
+### [building-in-the-open](https://github.com/claylo/building-in-the-open) `v1.2.1`
 
 Personas, skills, and quality gates for producing professional, self-contained development artifacts — from internal handoffs to end-user documentation
 
