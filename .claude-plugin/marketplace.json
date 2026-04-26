@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins by Clay Loveless",
-    "version": "1.0.7"
+    "version": "1.0.8"
   },
   "plugins": [
     {
@@ -15,8 +15,8 @@
         "source": "url",
         "url": "https://github.com/claylo/actionista.git"
       },
-      "description": "GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices",
-      "version": "0.2.0",
+      "description": "GitHub Actions assistant - helps create, review, and optimize workflows with up-to-date action versions and best practices",
+      "version": "0.2.1",
       "strict": true
     },
     {

@@ -16,9 +16,9 @@ Then install individual plugins:
 
 ## Plugins
 
-### [actionista](https://github.com/claylo/actionista) `v0.2.0`
+### [actionista](https://github.com/claylo/actionista) `v0.2.1`
 
-GitHub Actions assistant — helps create, review, and optimize workflows with up-to-date action versions, migration guidance, and best practices
+GitHub Actions assistant - helps create, review, and optimize workflows with up-to-date action versions and best practices
 
 ```
 /plugin install actionista@claylo-marketplace
