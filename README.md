@@ -32,6 +32,14 @@ Personas, skills, and quality gates for producing professional, self-contained d
 /plugin install building-in-the-open@claylo-marketplace
 ```
 
+### [cnc](https://github.com/claylo/cnc) `v1.4.0`
+
+Clay & Claude guardrails — hooks for precision, redirection, and workflow discipline
+
+```
+/plugin install cnc@claylo-marketplace
+```
+
 ## Adding plugins
 
 Each plugin entry in `.claude-plugin/marketplace.json` points to a standalone git repo. Plugins are self-contained — install one or all, they don't depend on each other unless noted.

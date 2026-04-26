@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code plugins by Clay Loveless",
-    "version": "1.0.10"
+    "version": "1.0.11"
   },
   "plugins": [
     {
@@ -27,6 +27,16 @@
       },
       "description": "Personas, skills, and quality gates for producing professional, self-contained development artifacts — from internal handoffs to end-user documentation",
       "version": "1.2.2",
+      "strict": true
+    },
+    {
+      "name": "cnc",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/claylo/cnc.git"
+      },
+      "description": "Clay & Claude guardrails — hooks for precision, redirection, and workflow discipline",
+      "version": "1.4.0",
       "strict": true
     }
   ]
